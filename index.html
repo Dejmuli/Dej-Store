@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dej Store</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+  :root {
+    --bg: #0d0f1a;
+    --bg2: #131627;
+    --bg3: #1a1e30;
+    --border: rgba(255,255,255,0.07);
+    --purple: #7c3aed;
+    --purple-light: #a855f7;
+    --cyan: #06b6d4;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG glow */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 800px; height: 800px;
+    background: radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+    height: 56px;
+    background: rgba(13,15,26,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #fff;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .nav-logo .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--purple), var(--purple-light));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .nav-links { display: flex; gap: 8px; }
+
+  .nav-btn {
+    background: none; border: none;
+    color: var(--text-dim);
+    font-size: 14px; font-family: 'Inter', sans-serif;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+  .nav-btn.active { color: var(--purple-light); }
+
+  /* PAGES */
+  .page { display: none; min-height: 100vh; padding-top: 56px; position: relative; z-index: 1; width: 100%; }
+  .page.active { display: block; }
+  #page-main.active { display: flex; align-items: center; justify-content: center; }
+
+  /* MAIN PAGE */
+  #page-main {
+    flex-direction: column;
+    background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.08) 0%, transparent 60%);
+  }
+
+  .main-center {
+    width: 100%;
+    max-width: 480px;
+    padding: 32px 16px;
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+  }
+
+  .card-icon {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(168,85,247,0.3));
+    border: 1px solid rgba(124,58,237,0.4);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 20px;
+  }
+
+  .card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px; font-weight: 700;
+    text-align: center;
+    background: linear-gradient(135deg, #a78bfa, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+
+  .card-sub {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  .field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .field-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .field-input::placeholder { color: var(--text-muted); }
+  .field-input:focus { border-color: rgba(124,58,237,0.5); }
+
+  .games-toggle {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-top: 10px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+
+  .games-toggle:hover { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--purple), var(--purple-light));
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    color: var(--text-dim);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+  /* RESULT BOXES */
+  .result-box {
+    margin-top: 20px;
+    border-radius: 14px;
+    padding: 20px;
+    display: none;
+  }
+
+  .result-box.success {
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.3);
+  }
+
+  .result-box.error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+  }
+
+  .result-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .result-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .result-icon.success { background: rgba(16,185,129,0.2); }
+  .result-icon.error { background: rgba(239,68,68,0.2); }
+
+  .result-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px; font-weight: 600;
+  }
+
+  .result-title.success { color: var(--green); }
+  .result-title.error { color: var(--red); }
+
+  .result-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .info-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-bottom: 14px;
+  }
+
+  .info-cell {
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 12px;
+  }
+
+  .info-cell-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .info-cell-value { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  .game-item {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .game-item .game-icon {
+    width: 28px; height: 28px;
+    background: rgba(6,182,212,0.2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .btn-cyan {
+    width: 100%;
+    background: linear-gradient(135deg, #0891b2, var(--cyan));
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  .btn-cyan:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* GAMES PAGE */
+  #page-games { }
+
+  .page-inner {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  .page-heading {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px; font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .page-heading-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .game-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.2s;
+  }
+
+  .game-card:hover { border-color: rgba(124,58,237,0.3); transform: translateY(-2px); }
+
+  .game-card-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.2));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+
+  .game-card-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .game-card-platform { font-size: 12px; color: var(--text-muted); }
+
+  /* ADMIN PAGE */
+  #page-admin { }
+
+  .admin-login-wrap {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; min-height: calc(100vh - 56px);
+    padding: 24px;
+  }
+
+  .admin-login-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    width: 100%; max-width: 400px;
+  }
+
+  .admin-panel { width: 100%; }
+
+  .admin-tabs {
+    display: flex; gap: 4px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+
+  .admin-tab {
+    flex: 1;
+    background: none; border: none;
+    padding: 10px;
+    border-radius: 9px;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .admin-tab.active {
+    background: var(--bg3);
+    color: var(--text);
+  }
+
+  .admin-section { display: none; }
+  .admin-section.active { display: block; }
+
+  .keys-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .keys-table th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  .keys-table td {
+    padding: 12px 14px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: middle;
+  }
+
+  .key-code {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    color: var(--purple-light);
+    background: rgba(124,58,237,0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .badge.active { background: rgba(16,185,129,0.15); color: var(--green); }
+  .badge.inactive { background: rgba(239,68,68,0.15); color: var(--red); }
+
+  .action-btn {
+    background: none; border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px; font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-muted);
+  }
+
+  .action-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+  .action-btn.danger:hover { background: rgba(239,68,68,0.1); color: var(--red); border-color: rgba(239,68,68,0.3); }
+  .action-btn.success-btn:hover { background: rgba(16,185,129,0.1); color: var(--green); border-color: rgba(16,185,129,0.3); }
+
+  .add-key-form {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .add-key-form h3 {
+    font-size: 15px; font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .form-group { flex: 1; min-width: 180px; }
+  .form-group label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 14px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: rgba(16,185,129,0.4); }
+  .toast.error { border-color: rgba(239,68,68,0.4); }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="logo-icon">🎮</div>
+    Dej Store
+  </div>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="showPage('main')">Ana Sayfa</button>
+    <button class="nav-btn" onclick="showPage('games')">Oyunlar</button>
+    <button class="nav-btn" onclick="showPage('admin')">Admin</button>
+  </div>
+</nav>
+
+<!-- MAIN PAGE -->
+<div class="page active" id="page-main">
+  <div class="main-center">
+    <div class="card">
+      <div class="card-icon">🔑</div>
+      <div class="card-title">Anahtar Doğrulama</div>
+      <div class="card-sub">Ürün anahtarınızı girerek doğrulayabilirsiniz</div>
+
+      <div class="field-label">Ürün Anahtarı</div>
+      <input class="field-input" id="keyInput" type="text" placeholder="XS-XXXXXXXXXXXX-XXXXXXXX"
+        oninput="formatKey(this)" maxlength="60">
+
+      <div class="games-toggle" onclick="showPage('games')">
+        🎮 Oyun Listesini Görüntüle →
+      </div>
+
+      <button class="btn-primary" id="verifyBtn" onclick="verifyKey()">
+        ✅ Anahtar Doğrula
+      </button>
+      <button class="btn-secondary" onclick="showPage('games')">Mağazayı Görüntüle</button>
+
+      <!-- SUCCESS -->
+      <div class="result-box success" id="resultSuccess">
+        <div class="result-header">
+          <div class="result-icon success">✅</div>
+          <div>
+            <div class="result-title success">Anahtar Geçerli!</div>
+            <div class="result-sub">Anahtar geçerli ve aktif</div>
+          </div>
+        </div>
+        <div class="info-grid">
+          <div class="info-cell">
+            <div class="info-cell-label">Durum</div>
+            <div class="info-cell-value" id="keyStatus">Hazır</div>
+          </div>
+          <div class="info-cell">
+            <div class="info-cell-label">Oyun Hakkı</div>
+            <div class="info-cell-value" id="keyGameCount">—</div>
+          </div>
+        </div>
+        <div id="keyGames"></div>
+        <button class="btn-cyan" onclick="goToGuardCode()">
+          🛡️ Guard Kodu Al →
+        </button>
+      </div>
+
+      <!-- ERROR -->
+      <div class="result-box error" id="resultError">
+        <div class="result-header">
+          <div class="result-icon error">❌</div>
+          <div>
+            <div class="result-title error">Anahtar Geçersiz!</div>
+            <div class="result-sub" id="errorMessage">Bu anahtar bulunamadı veya devre dışı bırakıldı.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GAMES PAGE -->
+<div class="page" id="page-games">
+  <div class="page-inner">
+    <div class="page-heading">🎮 Oyun Listesi</div>
+    <div class="page-heading-sub">Mağazamızda bulunan tüm oyunlar</div>
+    <div class="games-grid" id="gamesList">
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">🎮</div>
+        <p>Yükleniyor...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div class="page" id="page-admin">
+  <!-- Login -->
+  <div class="admin-login-wrap" id="adminLogin">
+    <div class="admin-login-card">
+      <div class="card-icon">🔐</div>
+      <div class="card-title">Admin Paneli</div>
+      <div class="card-sub" style="margin-bottom:24px">Yetkili giriş gerekli</div>
+      <div class="field-label">E-Posta</div>
+      <input class="field-input" id="adminEmail" type="email" placeholder="admin@email.com" style="margin-bottom:10px">
+      <div class="field-label">Şifre</div>
+      <div style="position:relative">
+        <input class="field-input" id="adminPass" type="password" placeholder="''''''''" onkeydown="if(event.key==='Enter')adminLogin()" style="padding-right:44px">
+        <button onclick="togglePassVis()" type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:18px;padding:0" id="eyeBtn">👁️</button>
+      </div>
+      <button class="btn-primary" style="margin-top:16px" onclick="adminLogin()">Giriş Yap</button>
+    </div>
+  </div>
+
+  <!-- Panel -->
+  <div class="page-inner admin-panel" id="adminPanel" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px">
+      <div class="page-heading" style="margin-bottom:0">⚙️ Admin Paneli</div>
+      <button class="action-btn danger" onclick="adminLogout()">Çıkış</button>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchTab('keys')">🔑 Keyler</button>
+      <button class="admin-tab" onclick="switchTab('games')">🎮 Oyunlar</button>
+    </div>
+
+    <!-- KEYS TAB -->
+    <div class="admin-section active" id="tab-keys">
+      <div class="add-key-form">
+        <h3>➕ Yeni Key Ekle</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Key Kodu</label>
+            <input class="field-input" id="newKeyCode" placeholder="XS-XXXX-XXXX" style="font-family:'Space Grotesk',sans-serif">
+          </div>
+          <div class="form-group">
+            <label>Oyun Adı</label>
+            <input class="field-input" id="newKeyGame" placeholder="EA Sports FC 26">
+          </div>
+          <div class="form-group">
+            <label>Platform</label>
+            <input class="field-input" id="newKeyPlatform" placeholder="Steam">
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-primary" style="width:auto;padding:12px 24px" onclick="addKey()">Key Ekle</button>
+          <button class="btn-secondary" style="width:auto;padding:12px 24px" onclick="generateRandomKey()">🎲 Rastgele Üret</button>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;background:var(--bg2);border:1px solid var(--border);border-radius:14px">
+        <table class="keys-table">
+          <thead>
+            <tr>
+              <th>Key Kodu</th>
+              <th>Oyun</th>
+              <th>Platform</th>
+              <th>Durum</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="keysTableBody">
+            <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🔑</div><p>Henüz key eklenmedi</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- GAMES TAB -->
+    <div class="admin-section" id="tab-games">
+      <div class="add-key-form">
+        <h3>➕ Yeni Oyun Ekle (Mağaza)</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Oyun Adı</label>
+            <input class="field-input" id="newGameName" placeholder="EA Sports FC 26">
+          </div>
+          <div class="form-group">
+            <label>Platform</label>
+            <input class="field-input" id="newGamePlatform" placeholder="Steam">
+          </div>
+          <div class="form-group">
+            <label>Emoji İkonu</label>
+            <input class="field-input" id="newGameIcon" placeholder="⚽">
+          </div>
+        </div>
+        <button class="btn-primary" style="width:auto;padding:12px 24px;margin-top:12px" onclick="addGame()">Oyun Ekle</button>
+      </div>
+
+      <div class="games-grid" id="adminGamesList">
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-icon">🎮</div>
+          <p>Henüz oyun eklenmedi</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBkmYlALk9bWXEwysR69J-Rqvxd5L9plz0",
+    authDomain: "dejmi-store-21daa.firebaseapp.com",
+    projectId: "dejmi-store-21daa",
+    storageBucket: "dejmi-store-21daa.firebasestorage.app",
+    messagingSenderId: "506589676100",
+    appId: "1:506589676100:web:d6234456bd10db0430f211",
+    measurementId: "G-YT6VLD6NE7"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  let currentKeyData = null;
+
+  // Auth state listener
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById('adminLogin').style.display = 'none';
+      document.getElementById('adminPanel').style.display = 'block';
+      loadAdminKeys();
+      loadAdminGames();
+    } else {
+      document.getElementById('adminLogin').style.display = 'flex';
+      document.getElementById('adminPanel').style.display = 'none';
+    }
+  });
+
+  // ---- UTILS ----
+  window.showToast = function(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.innerHTML = (type==='success'?'✅':'❌') + ' ' + msg;
+    t.className = 'toast show ' + type;
+    setTimeout(()=>{ t.className='toast'; }, 3000);
+  }
+
+  window.formatKey = function(input) {
+    input.value = input.value.toUpperCase();
+  }
+
+  // ---- NAVIGATION ----
+  window.showPage = function(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-'+page).classList.add('active');
+    const idx = {main:0,games:1,admin:2}[page];
+    document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+    if(page==='games') loadGames();
+    if(page==='admin' && document.getElementById('adminPanel').style.display!=='none') loadAdminKeys();
+  }
+
+  // ---- VERIFY KEY ----
+  window.verifyKey = async function() {
+    const keyCode = document.getElementById('keyInput').value.trim().toUpperCase();
+    if(!keyCode) { showToast('Lütfen bir key girin', 'error'); return; }
+
+    const btn = document.getElementById('verifyBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Doğrulanıyor...';
+
+    document.getElementById('resultSuccess').style.display = 'none';
+    document.getElementById('resultError').style.display = 'none';
+
+    try {
+      const docRef = doc(db, 'keys', keyCode);
+      const snap = await getDoc(docRef);
+
+      if(snap.exists()) {
+        const data = snap.data();
+        if(data.active === false) {
+          document.getElementById('errorMessage').textContent = 'Bu anahtar devre dışı bırakıldı.';
+          document.getElementById('resultError').style.display = 'block';
+        } else {
+          currentKeyData = { ...data, keyCode };
+          document.getElementById('keyStatus').textContent = 'Hazır';
+          document.getElementById('keyGameCount').textContent = '1 Oyun';
+          document.getElementById('keyGames').innerHTML = `
+            <div class="game-item">
+              <div class="game-icon">🎮</div>
+              <span>${data.game} <span style="color:var(--text-muted);font-size:11px">(${data.platform})</span></span>
+            </div>`;
+          document.getElementById('resultSuccess').style.display = 'block';
+        }
+      } else {
+        document.getElementById('errorMessage').textContent = 'Bu anahtar bulunamadı veya geçersiz.';
+        document.getElementById('resultError').style.display = 'block';
+      }
+    } catch(e) {
+      showToast('Bağlantı hatası: ' + e.message, 'error');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '✅ Anahtar Doğrula';
+  }
+
+  window.goToGuardCode = function() {
+    if(!currentKeyData) return;
+    // Guard kodu sayfasına yönlendir (şimdilik alert)
+    showToast('Guard kodu özelliği yakında eklenecek!', 'success');
+  }
+
+  // ---- GAMES ----
+  window.loadGames = async function() {
+    const grid = document.getElementById('gamesList');
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⏳</div><p>Yükleniyor...</p></div>';
+    try {
+      const snap = await getDocs(collection(db, 'games'));
+      if(snap.empty) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎮</div><p>Henüz oyun eklenmedi</p></div>';
+        return;
+      }
+      grid.innerHTML = '';
+      snap.forEach(d => {
+        const g = d.data();
+        grid.innerHTML += `
+          <div class="game-card">
+            <div class="game-card-icon">${g.icon||'🎮'}</div>
+            <div class="game-card-name">${g.name}</div>
+            <div class="game-card-platform">${g.platform}</div>
+          </div>`;
+      });
+    } catch(e) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><p>Yükleme hatası</p></div>';
+    }
+  }
+
+  window.togglePassVis = function() {
+    const input = document.getElementById("adminPass");
+    const btn = document.getElementById("eyeBtn");
+    if(input.type === "password") {
+      input.type = "text";
+      btn.textContent = "🙈";
+    } else {
+      input.type = "password";
+      btn.textContent = "👁️";
+    }
+  }
+
+  // ---- ADMIN ----
+  window.adminLogin = async function() {
+    const email = document.getElementById('adminEmail').value.trim();
+    const pass = document.getElementById('adminPass').value;
+    if(!email || !pass) { showToast('Email ve şifre girin', 'error'); return; }
+    const btn = document.querySelector('#adminLogin .btn-primary');
+    btn.disabled = true;
+    btn.textContent = 'Giriş yapılıyor...';
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+      showToast('Hoş geldin!');
+    } catch(e) {
+      showToast('Yanlış email veya şifre!', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Giriş Yap';
+    }
+  }
+
+  window.adminLogout = async function() {
+    await signOut(auth);
+    document.getElementById('adminPass').value = '';
+    showToast('Çıkış yapıldı!');
+  }
+
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+    document.getElementById('tab-'+tab).classList.add('active');
+    event.target.classList.add('active');
+    if(tab==='games') loadAdminGames();
+    if(tab==='keys') loadAdminKeys();
+  }
+
+  window.generateRandomKey = function() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const rand = n => Array.from({length:n},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+    document.getElementById('newKeyCode').value = `XS-${rand(8)}-${rand(8)}`;
+  }
+
+  window.addKey = async function() {
+    const code = document.getElementById('newKeyCode').value.trim().toUpperCase();
+    const game = document.getElementById('newKeyGame').value.trim();
+    const platform = document.getElementById('newKeyPlatform').value.trim();
+    if(!code||!game||!platform) { showToast('Tüm alanları doldurun', 'error'); return; }
+    try {
+      await setDoc(doc(db,'keys',code), { game, platform, active: true, createdAt: new Date().toISOString() });
+      showToast('Key eklendi!');
+      document.getElementById('newKeyCode').value = '';
+      document.getElementById('newKeyGame').value = '';
+      document.getElementById('newKeyPlatform').value = '';
+      loadAdminKeys();
+    } catch(e) { showToast('Hata: '+e.message,'error'); }
+  }
+
+  window.loadAdminKeys = async function() {
+    const tbody = document.getElementById('keysTableBody');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted)">Yükleniyor...</td></tr>';
+    try {
+      const snap = await getDocs(collection(db,'keys'));
+      if(snap.empty) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🔑</div><p>Henüz key eklenmedi</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      snap.forEach(d => {
+        const k = d.data();
+        const id = d.id;
+        tbody.innerHTML += `
+          <tr>
+            <td><span class="key-code">${id}</span></td>
+            <td>${k.game}</td>
+            <td style="color:var(--text-muted)">${k.platform}</td>
+            <td><span class="badge ${k.active!==false?'active':'inactive'}">${k.active!==false?'✅ Aktif':'❌ Devre Dışı'}</span></td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              ${k.active!==false
+                ? `<button class="action-btn danger" onclick="toggleKey('${id}',false)">Devre Dışı</button>`
+                : `<button class="action-btn success-btn" onclick="toggleKey('${id}',true)">Aktifleştir</button>`}
+              <button class="action-btn danger" onclick="deleteKey('${id}')">Sil</button>
+            </td>
+          </tr>`;
+      });
+    } catch(e) { showToast('Yükleme hatası','error'); }
+  }
+
+  window.toggleKey = async function(id, active) {
+    try {
+      await updateDoc(doc(db,'keys',id), { active });
+      showToast(active ? 'Key aktifleştirildi!' : 'Key devre dışı bırakıldı!');
+      loadAdminKeys();
+    } catch(e) { showToast('Hata: '+e.message,'error'); }
+  }
+
+  window.deleteKey = async function(id) {
+    if(!confirm(`"${id}" keyini silmek istediğine emin misin?`)) return;
+    try {
+      await deleteDoc(doc(db,'keys',id));
+      showToast('Key silindi!');
+      loadAdminKeys();
+    } catch(e) { showToast('Hata: '+e.message,'error'); }
+  }
+
+  window.addGame = async function() {
+    const name = document.getElementById('newGameName').value.trim();
+    const platform = document.getElementById('newGamePlatform').value.trim();
+    const icon = document.getElementById('newGameIcon').value.trim() || '🎮';
+    if(!name||!platform) { showToast('Oyun adı ve platform zorunlu', 'error'); return; }
+    try {
+      await setDoc(doc(collection(db,'games')), { name, platform, icon });
+      showToast('Oyun eklendi!');
+      document.getElementById('newGameName').value='';
+      document.getElementById('newGamePlatform').value='';
+      document.getElementById('newGameIcon').value='';
+      loadAdminGames();
+    } catch(e) { showToast('Hata: '+e.message,'error'); }
+  }
+
+  window.loadAdminGames = async function() {
+    const grid = document.getElementById('adminGamesList');
+    try {
+      const snap = await getDocs(collection(db,'games'));
+      if(snap.empty) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎮</div><p>Henüz oyun eklenmedi</p></div>';
+        return;
+      }
+      grid.innerHTML='';
+      snap.forEach(d => {
+        const g = d.data();
+        grid.innerHTML += `
+          <div class="game-card" style="position:relative">
+            <button class="action-btn danger" style="position:absolute;top:12px;right:12px;font-size:11px" onclick="deleteGame('${d.id}')">Sil</button>
+            <div class="game-card-icon">${g.icon||'🎮'}</div>
+            <div class="game-card-name">${g.name}</div>
+            <div class="game-card-platform">${g.platform}</div>
+          </div>`;
+      });
+    } catch(e) {}
+  }
+
+  window.deleteGame = async function(id) {
+    if(!confirm('Bu oyunu silmek istediğine emin misin?')) return;
+    try {
+      await deleteDoc(doc(db,'games',id));
+      showToast('Oyun silindi!');
+      loadAdminGames();
+    } catch(e) { showToast('Hata: '+e.message,'error'); }
+  }
+</script>
+
+</body>
+</html>
