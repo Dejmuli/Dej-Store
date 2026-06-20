@@ -841,8 +841,10 @@
   let currentKeyData = null;
 
   // Auth state listener
+  const ADMIN_UID = "KB3gyl3YZgTthQp8pZ1CVoGaKxv2";
+
   onAuthStateChanged(auth, (user) => {
-    if (user) {
+    if (user && user.uid === ADMIN_UID) {
       document.getElementById('adminLogin').style.display = 'none';
       document.getElementById('adminPanel').style.display = 'block';
       loadAdminKeys();
@@ -850,6 +852,7 @@
     } else {
       document.getElementById('adminLogin').style.display = 'flex';
       document.getElementById('adminPanel').style.display = 'none';
+      if (user) { signOut(auth); }
     }
   });
 
