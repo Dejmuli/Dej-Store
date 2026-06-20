@@ -336,23 +336,81 @@
     background: var(--bg2);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 20px;
+    overflow: hidden;
     transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
   }
 
-  .game-card:hover { border-color: rgba(124,58,237,0.3); transform: translateY(-2px); }
+  .game-card:hover { border-color: rgba(124,58,237,0.4); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
 
-  .game-card-icon {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.2));
-    border-radius: 12px;
+  .game-card-cover-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    background: var(--bg3);
+  }
+
+  .game-card-cover-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+  }
+
+  .game-card:hover .game-card-cover-wrap img { transform: scale(1.04); }
+
+  .game-card-cover-placeholder {
+    width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    margin-bottom: 14px;
+    font-size: 52px;
+    background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(6,182,212,0.1));
   }
 
-  .game-card-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
-  .game-card-platform { font-size: 12px; color: var(--text-muted); }
+  .game-card-featured-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    color: #000;
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.2px;
+    box-shadow: 0 2px 8px rgba(245,158,11,0.4);
+  }
+
+  .game-card-body {
+    padding: 12px 14px 14px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .game-card-name { font-weight: 700; font-size: 14px; line-height: 1.35; color: var(--text); }
+
+  .game-card-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .game-card-platform-badge {
+    display: inline-flex; align-items: center;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 3px 9px;
+    font-size: 11px; font-weight: 500;
+    color: var(--text-dim);
+  }
+
+  .game-card-special-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 6px;
+    padding: 3px 9px;
+    font-size: 11px; font-weight: 500;
+    color: #f59e0b;
+  }
+
+  .game-card-icon { display: none; }
+  .game-card-platform { display: none; }
 
   /* ADMIN PAGE */
   #page-admin { }
@@ -629,6 +687,9 @@
   <div class="page-inner">
     <div class="page-heading">🎮 Oyun Listesi</div>
     <div class="page-heading-sub">Mağazamızda bulunan tüm oyunlar</div>
+    <div style="margin-bottom:24px">
+      <input class="field-input" id="gameSearchInput" placeholder="🔍 Oyun ara..." style="font-size:14px" onkeyup="filterGames()">
+    </div>
     <div class="games-grid" id="gamesList">
       <div class="empty-state" style="grid-column:1/-1">
         <div class="empty-icon">🎮</div>
@@ -728,8 +789,20 @@
             <label>Emoji İkonu</label>
             <input class="field-input" id="newGameIcon" placeholder="⚽">
           </div>
+          <div class="form-group">
+            <label>Oyun Resmi</label>
+            <input class="field-input" id="newGameImage" type="file" accept="image/*" style="padding:8px">
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:12px">
+            <input type="checkbox" id="newGameFeatured" style="width:20px;height:20px;cursor:pointer">
+            <label for="newGameFeatured" style="margin:0;cursor:pointer">Öne Çıkan Oyun</label>
+          </div>
         </div>
         <button class="btn-primary" style="width:auto;padding:12px 24px;margin-top:12px" onclick="addGame()">Oyun Ekle</button>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <input class="field-input" id="adminGameSearch" placeholder="🔍 Oyun ara..." style="font-size:14px" onkeyup="filterAdminGames()">
       </div>
 
       <div class="games-grid" id="adminGamesList">
@@ -804,6 +877,15 @@
   }
 
   // ---- VERIFY KEY ----
+  // SHA-256 hash fonksiyonu
+  async function hashKey(key) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(key.trim().toUpperCase());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
   window.verifyKey = async function() {
     const keyCode = document.getElementById('keyInput').value.trim().toUpperCase();
     if(!keyCode) { showToast('Lütfen bir key girin', 'error'); return; }
@@ -816,7 +898,8 @@
     document.getElementById('resultError').style.display = 'none';
 
     try {
-      const docRef = doc(db, 'keys', keyCode);
+      const hashedKey = await hashKey(keyCode);
+      const docRef = doc(db, 'keys', hashedKey);
       const snap = await getDoc(docRef);
 
       if(snap.exists()) {
@@ -895,24 +978,95 @@
     const grid = document.getElementById('gamesList');
     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⏳</div><p>Yükleniyor...</p></div>';
     try {
-      const snap = await getDocs(collection(db, 'games'));
+      const snap = await getDocs(query(collection(db, 'games'), orderBy('featured', 'desc')));
       if(snap.empty) {
         grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎮</div><p>Henüz oyun eklenmedi</p></div>';
+        window.allGames = [];
         return;
       }
+      window.allGames = [];
       grid.innerHTML = '';
       snap.forEach(d => {
         const g = d.data();
+        window.allGames.push({id: d.id, ...g});
         grid.innerHTML += `
-          <div class="game-card">
-            <div class="game-card-icon">${g.icon||'🎮'}</div>
-            <div class="game-card-name">${g.name}</div>
-            <div class="game-card-platform">${g.platform}</div>
+          <div class="game-card" onclick="showComingSoon()">
+            <div class="game-card-cover-wrap">
+              ${g.imageUrl ? `<img src="${g.imageUrl}" alt="${g.name}">` : `<div class="game-card-cover-placeholder">${g.icon||'🎮'}</div>`}
+              ${g.featured ? '<div class="game-card-featured-badge">⭐ Öne Çıkan</div>' : ''}
+            </div>
+            <div class="game-card-body">
+              <div class="game-card-name">${g.name}</div>
+              <div class="game-card-badges">
+                <span class="game-card-platform-badge">${g.platform}</span>
+                ${g.featured ? '<span class="game-card-special-badge">☆ Özel</span>' : ''}
+              </div>
+            </div>
           </div>`;
       });
+      
+
     } catch(e) {
       grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><p>Yükleme hatası</p></div>';
     }
+  }
+
+  window.filterGames = function() {
+    const searchTerm = document.getElementById('gameSearchInput').value.toLowerCase();
+    const grid = document.getElementById('gamesList');
+    
+    if(!searchTerm) {
+      grid.innerHTML = '';
+      if(!window.allGames) return;
+      window.allGames.sort((a,b) => (b.featured || false) - (a.featured || false)).forEach(g => {
+        grid.innerHTML += `
+          <div class="game-card" onclick="showComingSoon()">
+            <div class="game-card-cover-wrap">
+              ${g.imageUrl ? `<img src="${g.imageUrl}" alt="${g.name}">` : `<div class="game-card-cover-placeholder">${g.icon||'🎮'}</div>`}
+              ${g.featured ? '<div class="game-card-featured-badge">⭐ Öne Çıkan</div>' : ''}
+            </div>
+            <div class="game-card-body">
+              <div class="game-card-name">${g.name}</div>
+              <div class="game-card-badges">
+                <span class="game-card-platform-badge">${g.platform}</span>
+                ${g.featured ? '<span class="game-card-special-badge">☆ Özel</span>' : ''}
+              </div>
+            </div>
+          </div>`;
+      });
+      return;
+    }
+    
+    const filtered = window.allGames.filter(g => g.name.toLowerCase().includes(searchTerm));
+    grid.innerHTML = '';
+    if(filtered.length === 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><p>Oyun bulunamadı</p></div>';
+      return;
+    }
+    
+    filtered.forEach(g => {
+      grid.innerHTML += `
+        <div class="game-card" onclick="showComingSoon()">
+          <div class="game-card-cover-wrap">
+            ${g.imageUrl ? `<img src="${g.imageUrl}" alt="${g.name}">` : `<div class="game-card-cover-placeholder">${g.icon||'🎮'}</div>`}
+            ${g.featured ? '<div class="game-card-featured-badge">⭐ Öne Çıkan</div>' : ''}
+          </div>
+          <div class="game-card-body">
+            <div class="game-card-name">${g.name}</div>
+            <div class="game-card-badges">
+              <span class="game-card-platform-badge">${g.platform}</span>
+              ${g.featured ? '<span class="game-card-special-badge">☆ Özel</span>' : ''}
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+
+  window.showComingSoon = function() {
+    document.getElementById('comingSoonModal').style.display = 'flex';
+  }
+  window.closeComingSoon = function() {
+    document.getElementById('comingSoonModal').style.display = 'none';
   }
 
   window.togglePassVis = function() {
@@ -972,7 +1126,8 @@
     const platform = document.getElementById('newKeyPlatform').value.trim();
     if(!code||!game||!platform) { showToast('Tüm alanları doldurun', 'error'); return; }
     try {
-      await setDoc(doc(db,'keys',code), { game, platform, active: true, createdAt: new Date().toISOString() });
+      const hashedCode = await hashKey(code);
+      await setDoc(doc(db,'keys',hashedCode), { game, platform, active: true, createdAt: new Date().toISOString() });
       showToast('Key eklendi!');
       document.getElementById('newKeyCode').value = '';
       document.getElementById('newKeyGame').value = '';
@@ -1032,37 +1187,133 @@
     const name = document.getElementById('newGameName').value.trim();
     const platform = document.getElementById('newGamePlatform').value.trim();
     const icon = document.getElementById('newGameIcon').value.trim() || '🎮';
+    const featured = document.getElementById('newGameFeatured').checked;
+    const imageFile = document.getElementById('newGameImage').files[0];
+    
     if(!name||!platform) { showToast('Oyun adı ve platform zorunlu', 'error'); return; }
-    try {
-      await setDoc(doc(collection(db,'games')), { name, platform, icon });
-      showToast('Oyun eklendi!');
-      document.getElementById('newGameName').value='';
-      document.getElementById('newGamePlatform').value='';
-      document.getElementById('newGameIcon').value='';
-      loadAdminGames();
-    } catch(e) { showToast('Hata: '+e.message,'error'); }
+    
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Ekleniyor...';
+    
+    let imageUrl = null;
+    if(imageFile) {
+      try {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          imageUrl = e.target.result;
+          
+          try {
+            await setDoc(doc(collection(db,'games')), { 
+              name, platform, icon, imageUrl, featured: featured || false 
+            });
+            showToast('Oyun eklendi!');
+            document.getElementById('newGameName').value='';
+            document.getElementById('newGamePlatform').value='';
+            document.getElementById('newGameIcon').value='';
+            document.getElementById('newGameImage').value='';
+            document.getElementById('newGameFeatured').checked=false;
+            btn.disabled = false;
+            btn.textContent = 'Oyun Ekle';
+            loadAdminGames();
+          } catch(e) { 
+            showToast('Hata: '+e.message,'error');
+            btn.disabled = false;
+            btn.textContent = 'Oyun Ekle';
+          }
+        };
+        reader.readAsDataURL(imageFile);
+      } catch(e) {
+        showToast('Resim hatası: '+e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Oyun Ekle';
+      }
+    } else {
+      try {
+        await setDoc(doc(collection(db,'games')), { name, platform, icon, featured: featured || false });
+        showToast('Oyun eklendi!');
+        document.getElementById('newGameName').value='';
+        document.getElementById('newGamePlatform').value='';
+        document.getElementById('newGameIcon').value='';
+        document.getElementById('newGameFeatured').checked=false;
+        btn.disabled = false;
+        btn.textContent = 'Oyun Ekle';
+        loadAdminGames();
+      } catch(e) { 
+        showToast('Hata: '+e.message,'error');
+        btn.disabled = false;
+        btn.textContent = 'Oyun Ekle';
+      }
+    }
   }
 
   window.loadAdminGames = async function() {
     const grid = document.getElementById('adminGamesList');
     try {
-      const snap = await getDocs(collection(db,'games'));
+      const snap = await getDocs(query(collection(db,'games'), orderBy('featured', 'desc')));
       if(snap.empty) {
         grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎮</div><p>Henüz oyun eklenmedi</p></div>';
         return;
       }
       grid.innerHTML='';
+      window.allAdminGames = [];
       snap.forEach(d => {
         const g = d.data();
+        window.allAdminGames.push({id: d.id, ...g});
         grid.innerHTML += `
-          <div class="game-card" style="position:relative">
-            <button class="action-btn danger" style="position:absolute;top:12px;right:12px;font-size:11px" onclick="deleteGame('${d.id}')">Sil</button>
-            <div class="game-card-icon">${g.icon||'🎮'}</div>
-            <div class="game-card-name">${g.name}</div>
-            <div class="game-card-platform">${g.platform}</div>
+          <div class="game-card">
+            <div class="game-card-cover-wrap">
+              ${g.imageUrl ? `<img src="${g.imageUrl}" alt="${g.name}">` : `<div class="game-card-cover-placeholder">${g.icon||'🎮'}</div>`}
+              ${g.featured ? '<div class="game-card-featured-badge">⭐ Öne Çıkan</div>' : ''}
+              <button class="action-btn danger" style="position:absolute;bottom:8px;right:8px;font-size:11px;padding:5px 10px;background:rgba(239,68,68,0.85);color:#fff;border-color:transparent" onclick="deleteGame('${d.id}')">Sil</button>
+            </div>
+            <div class="game-card-body">
+              <div class="game-card-name">${g.name}</div>
+              <div class="game-card-badges">
+                <span class="game-card-platform-badge">${g.platform}</span>
+              </div>
+              <button class="action-btn ${g.featured ? 'danger' : 'success-btn'}" style="font-size:11px;padding:6px 10px;margin-top:4px" onclick="toggleFeatured('${d.id}', ${!g.featured})">${g.featured ? '✕ Kaldır' : '⭐ Öne Çıkar'}</button>
+            </div>
           </div>`;
       });
     } catch(e) {}
+  }
+
+  window.filterAdminGames = function() {
+    const searchTerm = document.getElementById('adminGameSearch').value.toLowerCase();
+    const grid = document.getElementById('adminGamesList');
+    if(!window.allAdminGames) return;
+    const filtered = !searchTerm ? window.allAdminGames : window.allAdminGames.filter(g => g.name.toLowerCase().includes(searchTerm));
+    if(filtered.length === 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><p>Oyun bulunamadı</p></div>';
+      return;
+    }
+    grid.innerHTML = '';
+    filtered.forEach(({id, ...g}) => {
+      grid.innerHTML += `
+        <div class="game-card">
+          <div class="game-card-cover-wrap">
+            ${g.imageUrl ? `<img src="${g.imageUrl}" alt="${g.name}">` : `<div class="game-card-cover-placeholder">${g.icon||'🎮'}</div>`}
+            ${g.featured ? '<div class="game-card-featured-badge">⭐ Öne Çıkan</div>' : ''}
+            <button class="action-btn danger" style="position:absolute;bottom:8px;right:8px;font-size:11px;padding:5px 10px;background:rgba(239,68,68,0.85);color:#fff;border-color:transparent" onclick="deleteGame('${id}')">Sil</button>
+          </div>
+          <div class="game-card-body">
+            <div class="game-card-name">${g.name}</div>
+            <div class="game-card-badges">
+              <span class="game-card-platform-badge">${g.platform}</span>
+            </div>
+            <button class="action-btn ${g.featured ? 'danger' : 'success-btn'}" style="font-size:11px;padding:6px 10px;margin-top:4px" onclick="toggleFeatured('${id}', ${!g.featured})">${g.featured ? '✕ Kaldır' : '⭐ Öne Çıkar'}</button>
+          </div>
+        </div>`;
+    });
+  }
+
+  window.toggleFeatured = async function(id, newValue) {
+    try {
+      await updateDoc(doc(db, 'games', id), {featured: newValue});
+      showToast(newValue ? 'Öne çıkan olarak işaretlendi!' : 'Öne çıkanlardan kaldırıldı!');
+      loadAdminGames();
+    } catch(e) { showToast('Hata: '+e.message, 'error'); }
   }
 
   window.deleteGame = async function(id) {
